@@ -47,5 +47,78 @@
  *   //      frequentContact: "Swiggy", allAbove100: false, hasLargeTransaction: true }
  */
 export function analyzeUPITransactions(transactions) {
-  // Your code here
+   //  Validation
+  if (!Array.isArray(transactions) || transactions.length === 0) {
+    return null;
+  }
+
+  //  Filter valid transactions
+  const valid = transactions.filter(tx =>
+    typeof tx.amount === "number" &&
+    tx.amount > 0 &&
+    (tx.type === "credit" || tx.type === "debit")
+  );
+
+  if (valid.length === 0) {
+    return null;
+  }
+
+  const transactionCount = valid.length;
+
+  //  totalCredit & totalDebit
+  const totalCredit = valid
+    .filter(tx => tx.type === "credit")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const totalDebit = valid
+    .filter(tx => tx.type === "debit")
+    .reduce((sum, tx) => sum + tx.amount, 0);
+
+  const netBalance = totalCredit - totalDebit;
+
+  //  avgTransaction
+  const totalAmount = valid.reduce((sum, tx) => sum + tx.amount, 0);
+  const avgTransaction = Math.round(totalAmount / transactionCount);
+
+  //  highestTransaction
+  const highestTransaction = valid.reduce((max, tx) =>
+    tx.amount > max.amount ? tx : max
+  );
+
+  //  categoryBreakdown
+  const categoryBreakdown = valid.reduce((acc, tx) => {
+    acc[tx.category] = (acc[tx.category] || 0) + tx.amount;
+    return acc;
+  }, {});
+
+  //  frequentContact
+  const contactCount = {};
+  let frequentContact = valid[0].to;
+  let maxCount = 0;
+
+  valid.forEach(tx => {
+    contactCount[tx.to] = (contactCount[tx.to] || 0) + 1;
+
+    if (contactCount[tx.to] > maxCount) {
+      maxCount = contactCount[tx.to];
+      frequentContact = tx.to;
+    }
+  });
+
+  //  every() & some()
+  const allAbove100 = valid.every(tx => tx.amount > 100);
+  const hasLargeTransaction = valid.some(tx => tx.amount >= 5000);
+
+  return {
+    totalCredit,
+    totalDebit,
+    netBalance,
+    transactionCount,
+    avgTransaction,
+    highestTransaction,
+    categoryBreakdown,
+    frequentContact,
+    allAbove100,
+    hasLargeTransaction
+  };
 }
